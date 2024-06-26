@@ -24,8 +24,23 @@ Uso limitado a 512m de memória (geralmente este é o tamanho dos containers)
 > A cada operação foi performado o Garbage Collector
 
 Para todas as operações foi utilizado a configuração de *AsyncExecutor*, portanto é necessário ajustar a quantidade de *Min*/*MaxWorkers* e *Min/MaxWorkerQueue* para que a aplicação não ultrapasse o limite de memória disponível para a JVM; Para todos os testes a seguir, as configurações de worker foram as seguintes:
+```java
+    @Bean()
+    public Executor asyncExecutor()
+    {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(20);
+        executor.setMaxPoolSize(25);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("AsynchThread-");
+        executor.setAllowCoreThreadTimeOut(true);
+        executor.setKeepAliveSeconds(20);
+        executor.initialize();
 
-Conforme a configuração ao lado, para os métodos que ![](assets/images/Aspose.Words.fb0a9b0e-3379-48a8-a3e9-60108d4cd978.002.png) implementam  este  executor,  as  operações estarão  limitadas  a  no  máximo  25  operações  em concorrência  (***setMaxPoolSize***),  assim  que ultrapassar  o  máximo  de  operações  assíncronas serão enfileiradas para aguardar sua inicialização e destas  no  máximo  100  (***setQueueCapacity***) poderão ser enfileiradas. Levando isso em conta, se chegarem 200 operações em simultâneo 125 serão acatadas, as demais 75 irão “estourar” uma exceção do tipo ***TaskRejectedException***.
+        return executor;
+    }
+```
+Conforme a configuração acima, para os métodos que  implementam  este  executor,  as  operações estarão  limitadas  a  no  máximo  25  operações  em concorrência  (***setMaxPoolSize***),  assim  que ultrapassar  o  máximo  de  operações  assíncronas serão enfileiradas para aguardar sua inicialização e destas  no  máximo  100  (***setQueueCapacity***) poderão ser enfileiradas. Levando isso em conta, se chegarem 200 operações em simultâneo 125 serão acatadas, as demais 75 irão “estourar” uma exceção do tipo ***TaskRejectedException***.
 
 > Nota:  As  operações acatadas (do exemplo acima 125)  não  vão  parar  ou  deixar  de  executar caso a função principal receba uma exceção!
 
